@@ -22,8 +22,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip
 
 # PyTorch with CUDA support (cu121 wheels work well on CUDA 12.2 runtime)
-RUN pip install --no-cache-dir \
-    torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 \
+RUN pip install --no-cache-dir --upgrade\
+    torch torchvision torchaudio \
     --index-url https://download.pytorch.org/whl/cu121
 
 # Project requirements
