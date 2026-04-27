@@ -7,10 +7,10 @@ from huggingface_hub import login
 
 # --- Configuration ---
 # PIXART_MODEL_ID = "PixArt-alpha/PixArt-XL-2-1024-MS"
-PIXART_MODEL_ID = "PixArt‑alpha/PixArt‑Sigma‑XL‑2‑1024‑MS"
+PIXART_MODEL_ID = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PROMPT_DIR = os.path.join(ROOT, "datasets", "T2I-CompBench")
-PIXART_OUTPUT_DIR = os.path.join(ROOT, "datasets", "Generated_Images_PixArt")
+PIXART_OUTPUT_DIR = os.path.join(ROOT, "datasets", "Generated_Images_PixArt_Sigma")
 
 CATEGORIES = {
     "spatial": "spatial_val.txt",

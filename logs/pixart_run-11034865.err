@@ -1,0 +1,5 @@
++ cd /workspace
++ export HF_HOME=/llms
++ HF_HOME=/llms
++ python /workspace/main_pixart.py
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
