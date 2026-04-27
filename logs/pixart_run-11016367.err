@@ -1,0 +1,13 @@
++ cd /workspace
++ export HF_HOME=/llms
++ HF_HOME=/llms
++ python /workspace/main_pixart.py
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
+Loading pipeline components...:   0%|          | 0/5 [00:00<?, ?it/s]Some weights of the model checkpoint at /llms/hub/models--PixArt-alpha--PixArt-XL-2-1024-MS/snapshots/b89adadeccd9ead2adcb9fa2825d3fabec48d404/transformer were not used when initializing PixArtTransformer2DModel: 
+ ['caption_projection.y_embedding']
+Loading pipeline components...:  20%|██        | 1/5 [00:00<00:02,  1.97it/s]Loading pipeline components...:  40%|████      | 2/5 [00:00<00:01,  2.74it/s][transformers] Could not extract SentencePiece model from /llms/hub/models--PixArt-alpha--PixArt-XL-2-1024-MS/snapshots/b89adadeccd9ead2adcb9fa2825d3fabec48d404/tokenizer/spiece.model using sentencepiece library due to 
+SentencePieceExtractor requires the protobuf library but it was not found in your environment. Check out the instructions on the
+installation page of its repo: https://github.com/protocolbuffers/protobuf/tree/master/python#installation and follow the ones
+that match your environment. Please note that you may need to restart your runtime after installation.
+. Falling back to TikToken extractor.
+Loading pipeline components...:  60%|██████    | 3/5 [00:00<00:00,  3.85it/s]

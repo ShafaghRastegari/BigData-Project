@@ -6,3 +6,5 @@ safetensors>=0.4
 numpy
 pillow
 tqdm
+sentencepiece
+protobuf
