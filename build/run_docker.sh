@@ -10,6 +10,6 @@ docker run \
   -e HF_HOME="$LLM_CACHE_DIR" \
   -e HF_TOKEN="$HF_TOKEN" \
   --rm \
-  --gpus "device=$CUDA_VISIBLE_DEVICES" \
+  --gpus device="$CUDA_VISIBLE_DEVICES" \
   my_flux_image \
   /workspace/scripts/train.sh
