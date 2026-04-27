@@ -1,0 +1,2 @@
+/opt/nvidia/nvidia_entrypoint.sh: line 67: /workspace/scripts/train.sh: Permission denied
+/opt/nvidia/nvidia_entrypoint.sh: line 67: exec: /workspace/scripts/train.sh: cannot execute: Permission denied

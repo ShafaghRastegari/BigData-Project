@@ -8,4 +8,4 @@ cd /workspace
 # Use shared HF cache if provided
 export HF_HOME="${HF_HOME:-/llms}"
 
-python /workspace/main.py
+python /workspace/main_sd35.py
