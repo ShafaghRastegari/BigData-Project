@@ -5,7 +5,8 @@ set -x
 
 cd /workspace
 
-# Use shared HF cache if provided
 export HF_HOME="${HF_HOME:-/llms}"
+export DATASET="${DATASET:-t2i}"
+MODEL_SCRIPT="${MODEL_SCRIPT:-main.py}"
 
-python /workspace/main_pixart.py
+python "/workspace/${MODEL_SCRIPT}"

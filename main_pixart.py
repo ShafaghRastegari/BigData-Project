@@ -9,18 +9,24 @@ from huggingface_hub import login
 # PIXART_MODEL_ID = "PixArt-alpha/PixArt-XL-2-1024-MS"
 PIXART_MODEL_ID = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 ROOT = os.path.dirname(os.path.abspath(__file__))
-PROMPT_DIR = os.path.join(ROOT, "datasets", "T2I-CompBench")
+T2I_DIR = os.path.join(ROOT, "datasets", "T2I-CompBench")
 PIXART_OUTPUT_DIR = os.path.join(ROOT, "datasets", "Generated_Images_PixArt_Sigma")
-
-CATEGORIES = {
-    "spatial": "spatial_val.txt",
-    "numeric": "numeracy_val.txt",
-    "3Dspatial": "3d_spatial_val.txt",
-    "complex": "complex_val.txt",
-}
-
-PROMPTS_PER_CATEGORY = 25
+DATASET = os.environ.get("DATASET", "t2i")  # "t2i" or "geneval"
 SEED = 42
+
+if DATASET == "geneval":
+    CATEGORIES = {
+        "geneval_color": os.path.join(ROOT, "datasets", "geneval_color_attribution_prompts.txt"),
+    }
+    PROMPTS_PER_CATEGORY = None
+else:
+    CATEGORIES = {
+        "spatial": os.path.join(T2I_DIR, "spatial_val.txt"),
+        "numeric": os.path.join(T2I_DIR, "numeracy_val.txt"),
+        "3Dspatial": os.path.join(T2I_DIR, "3d_spatial_val.txt"),
+        "complex": os.path.join(T2I_DIR, "complex_val.txt"),
+    }
+    PROMPTS_PER_CATEGORY = 25
 
 # Generation settings
 HEIGHT = 1024
@@ -46,6 +52,7 @@ else:
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
+print(f"Dataset: {DATASET}")
 
 pixart_dtype = torch.float16 if device == "cuda" else torch.float32
 
@@ -70,10 +77,9 @@ except Exception as e:
     raise SystemExit(1)
 
 
-for category, prompt_file in CATEGORIES.items():
+for category, file_path in CATEGORIES.items():
     print(f"\n--- Processing Category with PixArt: {category} ---")
 
-    file_path = os.path.join(PROMPT_DIR, prompt_file)
     if not os.path.exists(file_path):
         print(f"Error: Prompt file not found: {file_path}")
         print(f"Skipping category {category}.")
@@ -83,19 +89,22 @@ for category, prompt_file in CATEGORIES.items():
         with open(file_path, "r", encoding="utf-8") as f:
             all_prompts = [line.strip() for line in f if line.strip()]
     except Exception as e:
-        print(f"Error reading file {prompt_file}: {e}")
+        print(f"Error reading file {file_path}: {e}")
         continue
 
     if not all_prompts:
-        print(f"No prompts found in {prompt_file}.")
+        print(f"No prompts found in {file_path}.")
         continue
 
-    random.seed(SEED)
-    if len(all_prompts) >= PROMPTS_PER_CATEGORY:
-        selected_prompts = random.sample(all_prompts, PROMPTS_PER_CATEGORY)
-    else:
-        print(f"Warning: Only {len(all_prompts)} prompts found in {prompt_file}. Using all.")
+    if PROMPTS_PER_CATEGORY is None:
         selected_prompts = all_prompts
+    else:
+        random.seed(SEED)
+        if len(all_prompts) >= PROMPTS_PER_CATEGORY:
+            selected_prompts = random.sample(all_prompts, PROMPTS_PER_CATEGORY)
+        else:
+            print(f"Warning: Only {len(all_prompts)} prompts found. Using all.")
+            selected_prompts = all_prompts
 
     category_dir = os.path.join(PIXART_OUTPUT_DIR, category)
     os.makedirs(category_dir, exist_ok=True)

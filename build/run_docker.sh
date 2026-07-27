@@ -9,6 +9,8 @@ docker run \
   -v "$LLM_CACHE_DIR":"$LLM_CACHE_DIR" \
   -e HF_HOME="$LLM_CACHE_DIR" \
   -e HF_TOKEN="$HF_TOKEN" \
+  -e DATASET="${DATASET:-t2i}" \
+  -e MODEL_SCRIPT="${MODEL_SCRIPT:-main.py}" \
   --rm \
   --gpus device="$CUDA_VISIBLE_DEVICES" \
   my_flux_image \
