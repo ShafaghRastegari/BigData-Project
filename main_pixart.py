@@ -16,7 +16,7 @@ SEED = 42
 
 if DATASET == "geneval":
     CATEGORIES = {
-        "geneval_color": os.path.join(ROOT, "datasets", "geneval_color_attribution_prompts.txt"),
+        "geneval_color": os.path.join(ROOT, "datasets", "geneval_color_attr_prompts.txt"),
     }
     PROMPTS_PER_CATEGORY = None
 else:

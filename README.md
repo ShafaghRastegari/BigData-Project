@@ -1,57 +1,131 @@
 # BigData-Project
 
-Text-to-image generation pipeline for comparing diffusion models on compositional prompts from the [T2I-CompBench](https://github.com/Karine-H/T2I-CompBench) benchmark.
+Generate images with diffusion models (FLUX, SD 3.5, PixArt) from compositional prompts, then compare the outputs.
 
-## Overview
+---
+## Project layout
 
-This project loads prompts from `datasets/T2I-CompBench/`, samples 25 prompts per category (with a fixed seed), and generates images using one of several diffusion models. Outputs are saved per model and per category for side-by-side comparison.
+```text
+BigData-Project/
+├── main.py                 # FLUX
+├── main_sd35.py            # SD 3.5
+├── main_pixart.py          # PixArt
+├── scripts/train.sh        # runs the chosen MODEL_SCRIPT inside Docker
+├── build/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── run_docker.sh       # SLURM entrypoint
+├── datasets/
+│   ├── T2I-CompBench/
+│   ├── geneval_color_attr_prompts.txt
+│   └── Generated_Images_*/
+├── GenEval/
+|   ├── evaluation_metadata.jsonl
+│   └── GenEval.ipynb  
+├── colab_pixart.ipynb
+└── logs/
+```
 
-**Supported models**
+## What this project does
 
-| Script | Model | Output directory |
-|--------|-------|------------------|
-| `main.py` | `black-forest-labs/FLUX.1-dev` | `datasets/Generated_Images_FLUX/` |
-| `main_sd35.py` | `stabilityai/stable-diffusion-3.5-large` | `datasets/Generated_Images_SD35/` |
-| `main_pixart.py` | `PixArt-alpha/PixArt-Sigma-XL-2-1024-MS` | `datasets/Generated_Images_PixArt_Sigma/` |
+1. Reads prompts from a dataset.
+2. Runs one model script inside Docker on the GPU cluster or on a GoogleColab Pro.
+3. Saves images under `datasets/Generated_Images_<MODEL>/...`.
 
-**Prompt categories:** `spatial`, `numeric`, `3Dspatial`, `complex`
+**Prompt datasets**
 
-## Prerequisites
+| `DATASET` value | Prompts used | How many |
+|-----------------|--------------|----------|
+| `t2i` (default) | `datasets/T2I-CompBench/` (`spatial`, `numeric`, `3Dspatial`, `complex`) | 25 prompts per category |
+| `geneval` | `datasets/geneval_color_attr_prompts.txt` | all prompts in the file |
 
-- Access to the UniboNLP SLURM cluster (master node: `faretra`)
-- Docker (rootless) installed on the server
-- Hugging Face account with access to gated models
-- `HF_TOKEN` environment variable set before submitting jobs
+**Model scripts**
 
-## Setup
+| `MODEL_SCRIPT` | Model | Images saved in |
+|----------------|-------|-----------------|
+| `main.py` | FLUX.1-dev | `datasets/Generated_Images_FLUX/` |
+| `main_sd35.py` | Stable Diffusion 3.5 Large | `datasets/Generated_Images_SD35/` |
+| `main_pixart.py` | PixArt-Sigma/Alpha | `datasets/Generated_Images_PixArt_Sigma/` or `datasets/Generated_Images_PixArt_Alpha/` |
 
-### 1. Build the Docker image
+---
 
-From the project root on the server:
+## Requirements
+
+- SSH access to the [UniboNLP cluster](http://137.204.107.40:37339/slurm/guide) (**faretra**: `137.204.107.40`, port `37335`)
+- Project cloned on the server (same folder on every node you use)
+- Docker image built once: `my_flux_image`
+- Hugging Face token with access to gated models
+
+---
+
+## First-time setup (do this once)
+
+### 1. Connect to the server
+
+```bash
+ssh YOUR_USERNAME@137.204.107.40 -p 37335
+git clone THIS_REPO
+cd ~/BigData-Project
+```
+
+### 2. Get the code
+
+```bash
+git pull
+```
+
+### 3. Build the Docker image (only once, or after changing `build/`)
 
 ```bash
 docker build -f build/Dockerfile -t my_flux_image .
 ```
 
-### 2. Choose which model to run
-
-Edit `scripts/train.sh` and set the last line to the desired script:
+### 4. Make scripts executable
 
 ```bash
-python /workspace/main.py          # FLUX
-python /workspace/main_sd35.py     # SD 3.5
-python /workspace/main_pixart.py     # PixArt
+chmod +x build/run_docker.sh scripts/train.sh
+mkdir -p logs
 ```
 
-## Running on the cluster
+---
 
-From the project directory on `faretra`:
+## How to run a job (every time)
+
+### Step 1 — Set your Hugging Face token
 
 ```bash
-mkdir -p logs
-export HF_TOKEN="your_huggingface_token"
-chmod +x build/run_docker.sh scripts/train.sh
+export HF_TOKEN="your_huggingface_token_here"
+```
 
+Check it is set:
+
+```bash
+if [ -n "$HF_TOKEN" ]; then echo "HF_TOKEN set"; else echo "HF_TOKEN missing"; fi
+```
+
+### Step 2 — Choose dataset and model
+
+Export only one DATASET and MODEL_SCRIPT like the example.
+
+Examples:
+
+```bash
+# T2I-CompBench + SD 3.5
+export DATASET="t2i"
+export MODEL_SCRIPT="main_sd35.py"
+
+# GenEval color + FLUX
+export DATASET="geneval"
+export MODEL_SCRIPT="main.py"
+
+# GenEval color + PixArt
+export DATASET="geneval"
+export MODEL_SCRIPT="main_pixart.py"
+```
+
+### Step 3 — Submit the job
+
+```bash
 sbatch -N 1 \
   --gpus=nvidia_geforce_rtx_3090:1 \
   -w faretra \
@@ -61,60 +135,47 @@ sbatch -N 1 \
   build/run_docker.sh
 ```
 
-The job runs inside Docker via `build/run_docker.sh`, which mounts the project folder and the shared model cache at `/llms`.
+You should see: `Submitted batch job <JOBID>`.
 
-## Monitoring
-
-**Check job status**
+### Step 4 — Monitor
 
 ```bash
 squeue -u $USER
-sacct -u $USER --starttime today --format=JobID,JobName,State,ExitCode
 ```
 
-**Read logs**
+When the job finishes (or if it fails):
 
 ```bash
-cat logs/gen_run-<jobid>.out
-cat logs/gen_run-<jobid>.err
+sacct -j <JOBID> --format=JobID,JobName,State,ExitCode
+cat logs/gen_run-<JOBID>.out
+cat logs/gen_run-<JOBID>.err
 ```
 
-**GPU usage on the cluster**
+### Step 5 — Check outputs
 
-Use the SLURM web dashboard or run `nvidia-smi` on the compute node.
+**T2I (`DATASET=t2i`):**
 
-**Verify outputs**
-
-Generated images appear under the model-specific output directory, organized by category:
-
-```
-datasets/Generated_Images_<MODEL>/
-  spatial/
-  numeric/
-  3Dspatial/
-  complex/
+```text
+datasets/Generated_Images_SD35/spatial/
+datasets/Generated_Images_SD35/numeric/
+datasets/Generated_Images_SD35/3Dspatial/
+datasets/Generated_Images_SD35/complex/
 ```
 
-## Project structure
+**GenEval (`DATASET=geneval`):**
 
-```
-BigData-Project/
-├── main.py              # FLUX generation
-├── main_sd35.py         # SD 3.5 generation
-├── main_pixart.py       # PixArt generation
-├── scripts/train.sh     # Entry point run inside Docker
-├── build/
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── run_docker.sh    # SLURM wrapper for Docker
-├── datasets/
-│   ├── T2I-CompBench/   # Input prompts
-│   └── Generated_Images_*/  # Output images
-└── logs/                # SLURM job logs
+```text
+datasets/Generated_Images_FLUX/geneval_color/
+datasets/Generated_Images_SD35/geneval_color/
+datasets/Generated_Images_PixArt_Sigma/geneval_color/
 ```
 
-## Notes
+## Run on Google Colab instead
 
-- Rebuild the Docker image after changing `build/Dockerfile` or `build/requirements.txt`.
-- Python-only changes (e.g. `main_*.py`) take effect without rebuilding; the project folder is mounted into the container.
-- For fair model comparison, keep resolution, step count, and seed policy consistent across scripts.
+All the image generation for all prompts (include T2I-CompBench and GenEval) for StableDiffusionXL model is run on GoogleColab pro using A100 GPU. Also all the models on GenEval prompt run on the GoogleColab pro too except FLUX.
+
+1. Open `run_on_colab.ipynb` in Colab (aelect A100 GPU runtime).
+2. Mount Drive.
+3. Point the prompt file to your GenEval/T2I-CompBench file (e.g. on Drive).
+4. Set `HF_TOKEN` in Colab Secrets.
+5. Run prefered section cells top to bottom.
