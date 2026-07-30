@@ -10,6 +10,7 @@ from huggingface_hub import login
 PIXART_MODEL_ID = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 T2I_DIR = os.path.join(ROOT, "datasets", "T2I-CompBench")
+# PIXART_OUTPUT_DIR = os.path.join(ROOT, "datasets", "Generated_Images_PixArt_Alpha")
 PIXART_OUTPUT_DIR = os.path.join(ROOT, "datasets", "Generated_Images_PixArt_Sigma")
 DATASET = os.environ.get("DATASET", "t2i")  # "t2i" or "geneval"
 SEED = 42
