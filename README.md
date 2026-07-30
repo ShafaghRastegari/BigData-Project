@@ -115,6 +115,8 @@ You should select your prefered `DATASET` and `MODEL_SCRIPT` by the `export` com
 Valid `MODEL_SCRIPT` values: `main.py` | `main_sd35.py` | `main_pixart.py`  
 Valid `DATASET` values: `t2i` | `geneval`
 
+> Note: If you want to run PixArt_Sigma or PixArt_Alpha you should un/comment the model name in the code file (`main_pixart.py`). Other files run the model which explain in [Models](#models) section.
+
 ```bash
 # Example A: T2I-CompBench with SD 3.5
 export DATASET="t2i"
